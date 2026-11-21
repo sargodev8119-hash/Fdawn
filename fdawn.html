@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#090d18">
+<title>FDown</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#090d18;color:#f4f6ff;
+ font-family:Arial,sans-serif;min-height:100vh
+}
+header{
+ padding:23px 20px;display:flex;align-items:center;
+ justify-content:space-between;border-bottom:1px solid #20283a
+}
+.logo{font-size:23px;font-weight:800;letter-spacing:1px}
+.logo span{color:#4f8cff}
+.tag{color:#8e9ab2;font-size:12px}
+main{max-width:480px;margin:auto;padding:30px 20px}
+.hero{text-align:center;margin:30px 0}
+.icon{
+ width:75px;height:75px;margin:auto;border-radius:23px;
+ background:linear-gradient(145deg,#1d65e9,#1441a4);
+ display:grid;place-items:center;font-size:32px;
+ box-shadow:0 10px 35px #1747aa55
+}
+h1{font-size:27px;margin:22px 0 10px}
+.subtitle{color:#8c98ad;line-height:1.6;font-size:14px}
+.card{
+ background:#111827;border:1px solid #232e43;
+ border-radius:20px;padding:18px;margin-top:28px
+}
+.label{font-size:13px;color:#a8b4c9;margin-bottom:12px}
+textarea{
+ width:100%;height:110px;resize:none;border:1px solid #263248;
+ background:#0a101e;color:white;border-radius:13px;padding:14px;
+ outline:none;font-size:14px;line-height:1.5
+}
+textarea:focus{border-color:#4382f5}
+.buttons{display:flex;gap:10px;margin-top:12px}
+button{
+ border:0;border-radius:12px;padding:14px;
+ color:white;font-weight:700;cursor:pointer
+}
+.clear{background:#202a3a}
+.download{
+ flex:1;background:linear-gradient(90deg,#2870f5,#1751c4)
+}
+button:disabled{opacity:.55;cursor:default}
+.status{
+ display:none;margin-top:15px;padding:12px;
+ border-radius:12px;font-size:13px;line-height:1.5;
+ background:#182438;color:#b9cae8
+}
+.status.show{display:block}
+.info{
+ margin-top:22px;color:#8997ad;font-size:12px;line-height:1.7;
+ text-align:center
+}
+footer{
+ text-align:center;padding:20px;color:#647087;font-size:11px
+}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">F<span>Down</span></div>
+ <div class="tag">PERSONAL • NO ADS</div>
+</header>
+
+<main>
+ <div class="hero">
+  <div class="icon">⬇</div>
+  <h1>ভিডিও ডাউনলোড</h1>
+  <div class="subtitle">
+   ভিডিও লিংক পেস্ট করো এবং ডাউনলোড শুরু করো।
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="label">ভিডিও লিংক</div>
+  <textarea id="url" placeholder="এখানে ভিডিও লিংক পেস্ট করো..."></textarea>
+  <div class="buttons">
+   <button class="clear" onclick="clearLink()">Clear</button>
+   <button class="download" id="downloadBtn" onclick="downloadVideo()">
+    ⬇ Download Video
+   </button>
+  </div>
+  <div class="status" id="status"></div>
+ </div>
+
+ <div class="info">
+  শুধুমাত্র এমন ভিডিও ডাউনলোড করো যেগুলো ডাউনলোড করার
+  অনুমতি তোমার আছে। ব্যক্তিগত বা সুরক্ষিত ভিডিওর সুরক্ষা
+  এড়িয়ে ডাউনলোড করা যাবে না।
+ </div>
+</main>
+
+<footer>FDown • Personal video downloader</footer>
+
+<script>
+const urlBox = document.getElementById("url");
+const statusBox = document.getElementById("status");
+const btn = document.getElementById("downloadBtn");
+
+function clearLink(){
+ urlBox.value="";
+ statusBox.className="status";
+ statusBox.textContent="";
+}
+
+function showStatus(text){
+ statusBox.textContent=text;
+ statusBox.className="status show";
+}
+
+async function downloadVideo(){
+ const url=urlBox.value.trim();
+ if(!url){
+  showStatus("আগে ভিডিও লিংক পেস্ট করো।");
+  return;
+ }
+
+ btn.disabled=true;
+ btn.textContent="⏳ অপেক্ষা করো...";
+ showStatus("ভিডিও প্রস্তুত করা হচ্ছে...");
+
+ try{
+  const response=await fetch("/download",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({url})
+  });
+
+  if(!response.ok){
+   const data=await response.json().catch(()=>({}));
+   throw new Error(data.error||"ডাউনলোড করা যায়নি।");
+  }
+
+  const blob=await response.blob();
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="video.mp4";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+
+  showStatus("ডাউনলোড শুরু হয়েছে! 🎉");
+ }catch(e){
+  showStatus(e.message||"সমস্যা হয়েছে। আবার চেষ্টা করো।");
+ }finally{
+  btn.disabled=false;
+  btn.textContent="⬇ Download Video";
+ }
+}
+</script>
+</body>
+</html>
