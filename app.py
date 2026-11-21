@@ -8,9 +8,12 @@ import os
 import glob
 import shutil
 import json
+import logging
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
+
+logging.basicConfig(level=logging.INFO)
 
 ALLOWED_ORIGIN = "https://sargodev8119-hash.github.io"
 
@@ -22,7 +25,11 @@ CORS(app, resources={
     }
 })
 
-# Facebook URL validation
+
+# ==============================
+# FACEBOOK URL VALIDATION
+# ==============================
+
 def is_valid_facebook_url(url):
     try:
         parsed = urlparse(url)
@@ -36,11 +43,15 @@ def is_valid_facebook_url(url):
         )
 
         return parsed.scheme in ("http", "https") and allowed
+
     except Exception:
         return False
 
 
-# Run yt-dlp
+# ==============================
+# RUN YT-DLP
+# ==============================
+
 def run_ytdlp(args, timeout=180):
     return subprocess.run(
         ["python", "-m", "yt_dlp"] + args,
@@ -50,12 +61,19 @@ def run_ytdlp(args, timeout=180):
     )
 
 
+# ==============================
+# HOME
+# ==============================
+
 @app.get("/")
 def home():
     return "FDown server is running!"
 
 
+# ==============================
 # VIDEO INFO API
+# ==============================
+
 @app.post("/info")
 def video_info():
     data = request.get_json(silent=True) or {}
@@ -79,6 +97,8 @@ def video_info():
         ], timeout=60)
 
         if result.returncode != 0:
+            logging.error("INFO yt-dlp error: %s", result.stderr[-1500:])
+
             return jsonify({
                 "error": "ভিডিওর তথ্য পাওয়া যায়নি। ভিডিওটি পাবলিক কিনা পরীক্ষা করো।"
             }), 400
@@ -86,17 +106,20 @@ def video_info():
         info = json.loads(result.stdout)
 
         formats = info.get("formats") or []
+
         heights = sorted({
-            f.get("height")
+            int(f["height"])
             for f in formats
-            if f.get("height") and f.get("vcodec") != "none"
-        })
+            if f.get("height")
+            and f.get("vcodec") != "none"
+        }, reverse=True)
 
         fps_values = sorted({
-            round(f.get("fps"))
+            int(round(f["fps"]))
             for f in formats
-            if f.get("fps") and f.get("vcodec") != "none"
-        })
+            if f.get("fps")
+            and f.get("vcodec") != "none"
+        }, reverse=True)
 
         return jsonify({
             "title": info.get("title") or "Facebook Video",
@@ -108,19 +131,27 @@ def video_info():
         })
 
     except subprocess.TimeoutExpired:
-        return jsonify({"error": "ভিডিও তথ্য পেতে সময় বেশি লাগছে"}), 408
+        return jsonify({
+            "error": "ভিডিও তথ্য পেতে সময় বেশি লাগছে"
+        }), 408
 
     except Exception:
-        return jsonify({"error": "সার্ভারে সমস্যা হয়েছে"}), 500
+        logging.exception("Video info error")
+
+        return jsonify({
+            "error": "সার্ভারে সমস্যা হয়েছে"
+        }), 500
 
 
+# ==============================
 # VIDEO DOWNLOAD API
+# ==============================
+
 @app.post("/download")
 def download():
     data = request.get_json(silent=True) or {}
-    url = (data.get("url") or "").strip()
 
-    # User choices
+    url = (data.get("url") or "").strip()
     quality = str(data.get("quality", "best")).strip().lower()
     fps = str(data.get("fps", "original")).strip().lower()
 
@@ -130,7 +161,11 @@ def download():
     if not is_valid_facebook_url(url):
         return jsonify({"error": "সঠিক Facebook ভিডিও লিংক দাও"}), 400
 
-    # Allowed quality values
+
+    # ==============================
+    # QUALITY SETTINGS
+    # ==============================
+
     allowed_qualities = {
         "best": None,
         "144": 144,
@@ -143,71 +178,143 @@ def download():
     }
 
     if quality not in allowed_qualities:
-        return jsonify({"error": "সঠিক ভিডিও Quality নির্বাচন করো"}), 400
+        return jsonify({
+            "error": "সঠিক ভিডিও Quality নির্বাচন করো"
+        }), 400
 
     if fps not in ("original", "24", "30", "50", "60"):
-        return jsonify({"error": "সঠিক FPS নির্বাচন করো"}), 400
+        return jsonify({
+            "error": "সঠিক FPS নির্বাচন করো"
+        }), 400
+
 
     max_height = allowed_qualities[quality]
 
-    # Build format filters
-    height_filter = ""
+
+    # ==============================
+    # BUILD VIDEO FILTERS
+    # ==============================
+
+    filters = ""
+
     if max_height:
-        height_filter = f"[height<={max_height}]"
+        filters += f"[height<={max_height}]"
 
-    fps_filter = ""
     if fps != "original":
-        fps_filter = f"[fps<={fps}]"
+        filters += f"[fps<={fps}]"
 
-    # H.264 preference for playback compatibility
-    video_filter = height_filter + fps_filter
 
-    if video_filter:
-        video_format = (
-            f"bestvideo[vcodec^=avc1]{video_filter}"
-            f"/bestvideo{video_filter}"
+    # ==============================
+    # VIDEO + AUDIO FORMAT
+    # ==============================
+
+    # প্রথমে H.264 ভিডিও নেওয়ার চেষ্টা করবে
+    # এরপর অন্য ভিডিও codec fallback হিসেবে নেবে
+    # অডিও আলাদাভাবে নিয়ে FFmpeg দিয়ে merge করবে
+
+    if filters:
+        format_selector = (
+            f"bestvideo[vcodec^=avc1]{filters}+bestaudio/"
+            f"bestvideo{filters}+bestaudio/"
+            f"best{filters}"
         )
-        combined_format = f"best{height_filter}{fps_filter}"
-        format_selector = f"{video_format}+bestaudio/{combined_format}"
     else:
         format_selector = (
-            "bestvideo[vcodec^=avc1]+bestaudio"
-            "/bestvideo+bestaudio/best"
+            "bestvideo[vcodec^=avc1]+bestaudio/"
+            "bestvideo+bestaudio/"
+            "best"
         )
 
+
+    # ==============================
+    # TEMPORARY DIRECTORY
+    # ==============================
+
     temp_dir = tempfile.mkdtemp(prefix="fdown_")
-    output_template = os.path.join(temp_dir, "video.%(ext)s")
+
+    output_template = os.path.join(
+        temp_dir,
+        "video.%(ext)s"
+    )
+
+
+    # ==============================
+    # YT-DLP COMMAND
+    # ==============================
 
     command = [
         "--no-playlist",
         "--no-warnings",
         "--socket-timeout", "30",
-        "--retries", "2",
-        "--fragment-retries", "2",
+        "--retries", "3",
+        "--fragment-retries", "3",
         "--max-filesize", "100M",
+
         "-f", format_selector,
+
+        # ভিডিও ও অডিও Merge করে MP4 তৈরি
         "--merge-output-format", "mp4",
+
+        # MP4 দ্রুত চালু হওয়ার জন্য
         "--postprocessor-args", "ffmpeg:-movflags +faststart",
+
         "-o", output_template,
         url
     ]
 
+
+    # ==============================
+    # DOWNLOAD
+    # ==============================
+
     try:
         result = run_ytdlp(command, timeout=240)
 
-        files = glob.glob(os.path.join(temp_dir, "video.*"))
+        # তৈরি হওয়া ফাইল খুঁজবে
+        files = glob.glob(
+            os.path.join(temp_dir, "video.*")
+        )
+
         files = [
             f for f in files
-            if os.path.isfile(f) and not f.endswith(".part")
+            if os.path.isfile(f)
+            and not f.endswith(".part")
+            and not f.endswith(".ytdl")
         ]
 
         if result.returncode != 0 or not files:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+
+            logging.error(
+                "DOWNLOAD yt-dlp error: %s",
+                result.stderr[-2500:]
+            )
+
+            shutil.rmtree(
+                temp_dir,
+                ignore_errors=True
+            )
+
             return jsonify({
-                "error": "ডাউনলোড ব্যর্থ। ভিডিওটি পাবলিক কিনা বা FFmpeg ইনস্টল আছে কিনা পরীক্ষা করো।"
+                "error": (
+                    "ডাউনলোড ব্যর্থ। ভিডিওটি পাবলিক কিনা, "
+                    "FFmpeg ইনস্টল আছে কিনা এবং ভিডিওর "
+                    "Quality/FPS উপলব্ধ কিনা পরীক্ষা করো।"
+                )
             }), 400
 
-        video_path = files[0]
+
+        # MP4 ফাইল খুঁজে অগ্রাধিকার
+        mp4_files = [
+            f for f in files
+            if f.lower().endswith(".mp4")
+        ]
+
+        video_path = mp4_files[0] if mp4_files else files[0]
+
+
+        # ==============================
+        # SEND FILE
+        # ==============================
 
         response = send_file(
             video_path,
@@ -216,21 +323,45 @@ def download():
             mimetype="video/mp4"
         )
 
+        # Download শেষ হলে temporary files মুছে ফেলবে
         response.call_on_close(
-            lambda: shutil.rmtree(temp_dir, ignore_errors=True)
+            lambda: shutil.rmtree(
+                temp_dir,
+                ignore_errors=True
+            )
         )
 
         return response
 
+
+    # ==============================
+    # ERROR HANDLING
+    # ==============================
+
     except subprocess.TimeoutExpired:
         shutil.rmtree(temp_dir, ignore_errors=True)
-        return jsonify({"error": "ডাউনলোডে বেশি সময় লাগছে। আবার চেষ্টা করো।"}), 408
+
+        return jsonify({
+            "error": "ডাউনলোডে বেশি সময় লাগছে। আবার চেষ্টা করো।"
+        }), 408
 
     except Exception:
-        shutil.rmtree(temp_dir, ignore_errors=True)
-        return jsonify({"error": "সার্ভারে সমস্যা হয়েছে"}), 500
+        logging.exception("Download error")
 
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+        return jsonify({
+            "error": "সার্ভারে সমস্যা হয়েছে"
+        }), 500
+
+
+# ==============================
+# START SERVER
+# ==============================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
