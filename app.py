@@ -1,12 +1,8 @@
-
-from flask import Flask, request, jsonify, send_file
-from werkzeug.utils import secure_filename
-import os
+from flask import Flask, request, jsonify
+from urllib.parse import urlparse
+import ipaddress
 
 app = Flask(__name__)
-
-# Maximum upload size: 50 MB
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 @app.get("/")
 def home():
@@ -14,32 +10,38 @@ def home():
 
 @app.post("/download")
 def download():
-    if "video" not in request.files:
-        return jsonify({"error": "ভিডিও ফাইল নির্বাচন করো"}), 400
+    data = request.get_json(silent=True) or {}
+    url = (data.get("url") or "").strip()
 
-    video = request.files["video"]
+    if not url:
+        return jsonify({"error": "ভিডিও লিংক দাও"}), 400
 
-    if not video.filename:
-        return jsonify({"error": "ফাইলের নাম নেই"}), 400
+    parsed = urlparse(url)
 
-    filename = secure_filename(video.filename)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return jsonify({"error": "সঠিক ভিডিও URL দাও"}), 400
 
-    allowed = {".mp4", ".mov", ".webm"}
-    ext = os.path.splitext(filename)[1].lower()
+    host = parsed.hostname.lower()
 
-    if ext not in allowed:
-        return jsonify({"error": "অনুমোদিত ভিডিও ফাইল নয়"}), 400
+    if host in ("localhost",) or host.endswith(".localhost") or host.endswith(".local"):
+        return jsonify({"error": "এই হোস্ট অনুমোদিত নয়"}), 400
 
-    return send_file(
-        video,
-        as_attachment=True,
-        download_name=filename
-    )
+    try:
+        ip = ipaddress.ip_address(host)
+        if not ip.is_global:
+            return jsonify({"error": "এই IP অনুমোদিত নয়"}), 400
+    except ValueError:
+        pass
 
-@app.errorhandler(413)
-def too_large(error):
-    return jsonify({"error": "ফাইল ৫০ MB-এর বেশি"}), 413
+    ext = parsed.path.lower()
+    if not ext.endswith((".mp4", ".webm", ".mov")):
+        return jsonify({
+            "error": "সরাসরি MP4, WEBM বা MOV ভিডিও লিংক ব্যবহার করো"
+        }), 400
+
+    # Return the validated direct link.
+    return jsonify({"download_url": url})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    import os
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
