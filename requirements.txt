@@ -1,9 +1,9 @@
 
+
 Flask
-Flask-Cors
-gunicorn
-requests
+flask-cors
 yt-dlp
+gunicorn
 
 
 
