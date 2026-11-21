@@ -3,354 +3,873 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#080d18">
-<title>FDown - Video Downloader</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090d18">
+<title>FDown</title>
+
 <style>
-:root{--accent:#3985ff;--bg:#080d18;--panel:#111a2a;--panel2:#0d1422;--text:#f4f7ff;--muted:#8d9bb2;--border:#202c40}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;min-height:100vh}
-body.light{--bg:#f1f5fb;--panel:#fff;--panel2:#eaf0f8;--text:#152033;--muted:#62718a;--border:#d7e0ed}
-button,input,textarea,select{font:inherit}button{cursor:pointer}
-header{height:65px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
-.head-left{display:flex;align-items:center;gap:12px}
-.menu-btn{width:40px;height:40px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text);font-size:20px}
-.logo{font-size:23px;font-weight:900}.logo span{color:var(--accent)}
-.head-right{font-size:10px;color:var(--muted)}
-.layout{display:flex;min-height:calc(100vh - 65px)}
-.sidebar{width:245px;flex-shrink:0;border-right:1px solid var(--border);padding:18px 12px;background:var(--bg)}
-.nav-label{color:var(--muted);font-size:10px;letter-spacing:1.5px;padding:15px 12px 8px}
-.nav-item{width:100%;border:0;background:transparent;color:var(--muted);padding:13px 12px;border-radius:12px;text-align:left;margin:3px 0;display:flex;align-items:center;gap:12px;font-size:14px}
-.nav-item:hover,.nav-item.active{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
-.nav-icon{width:22px;text-align:center;font-size:17px}
-.side-bottom{margin-top:30px;padding:12px;color:var(--muted);font-size:11px;line-height:1.7}
-.content{width:100%;max-width:850px;margin:auto;padding:25px 20px 50px}
-.page{display:none}.page.active{display:block}
-.hero{text-align:center;margin:22px 0 28px}
-.app-icon{width:72px;height:72px;margin:auto;border-radius:23px;display:grid;place-items:center;font-size:32px;background:linear-gradient(145deg,var(--accent),#123d91);box-shadow:0 12px 35px color-mix(in srgb,var(--accent) 25%,transparent)}
-h1{font-size:27px;margin:20px 0 10px}
-.subtitle{font-size:13px;color:var(--muted);line-height:1.7}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:19px;padding:18px;margin:15px 0}
-.label{font-size:13px;color:var(--muted);margin-bottom:12px}
-textarea{width:100%;height:105px;resize:vertical;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:13px;padding:14px;outline:none;font-size:14px;line-height:1.6}
-textarea:focus{border-color:var(--accent)}
-.buttons{display:flex;gap:10px;margin-top:12px}
-.btn{border:0;border-radius:12px;padding:13px 16px;color:white;font-weight:bold}
-.btn-primary{flex:1;background:linear-gradient(90deg,var(--accent),#2462d1)}
-.btn-secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
-.btn:disabled{opacity:.55;cursor:wait}
-.status{display:none;margin-top:14px;padding:13px;border-radius:12px;font-size:13px;line-height:1.6;background:var(--panel2);color:var(--muted);overflow-wrap:anywhere}
-.status.show{display:block}.status.error{color:#ff7c89}.status.success{color:#42cf97}
-.section-title{font-size:20px;margin:5px 0 8px}
-.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
-.setting-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 0;border-bottom:1px solid var(--border}
+:root{
+ --bg:#090d18;
+ --card:#111827;
+ --card2:#172033;
+ --text:#f4f6ff;
+ --muted:#94a3b8;
+ --border:#263248;
+ --accent:#6c63ff;
+ --accent2:#8b5cf6;
+ --danger:#ef4444;
 }
-.setting-row:last-child{border-bottom:0}
-.setting-name{font-size:14px}.setting-desc{font-size:11px;color:var(--muted);margin-top:5px}
-select{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px;width:100%;max-width:155px}
-.color-list{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
-.color-dot{width:35px;height:35px;border-radius:50%;border:3px solid var(--panel);outline:1px solid var(--border)}
-.color-dot.selected{outline:3px solid var(--text)}
-.preview-box{display:none;margin-top:15px;border:1px solid var(--border);background:var(--panel2);border-radius:15px;overflow:hidden}
-.preview-box.show{display:block}
-.preview-thumb{width:100%;max-height:240px;object-fit:cover;display:block;background:var(--panel2)}
-.preview-meta{padding:14px}.preview-title{font-size:14px;font-weight:700;line-height:1.5}
-.preview-sub{font-size:12px;color:var(--muted);margin-top:6px}
-.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-.option-label{font-size:12px;color:var(--muted);margin-bottom:7px}
-.option-select{width:100%;max-width:none}
-.fetch-info{width:100%;margin-top:12px;background:var(--panel2);color:var(--text);border:1px solid var(--border)}
-.history-item{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--border}
+body.light{
+ --bg:#f3f5fb;
+ --card:#ffffff;
+ --card2:#edf1fa;
+ --text:#182033;
+ --muted:#68758b;
+ --border:#dce2ee;
 }
-.history-icon{width:42px;height:42px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;flex-shrink:0}
-.history-info{flex:1;min-width:0}.history-title{font-size:13px;overflow-wrap:anywhere}
-.history-date{font-size:11px;color:var(--muted);margin-top:5px}
-.empty{text-align:center;padding:35px 15px;color:var(--muted);line-height:1.8;font-size:13px}
-.info-box{line-height:1.8;font-size:13px;color:var(--muted)}
-.info-box a{color:var(--accent);overflow-wrap:anywhere}
-footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
-.overlay{display:none}
-@media(max-width:700px){
-.sidebar{position:fixed;left:-260px;top:65px;bottom:0;z-index:20;transition:left .22s;width:245px;background:var(--bg);box-shadow:12px 0 40px #0005}
+body{
+ margin:0;
+ background:var(--bg);
+ color:var(--text);
+ font-family:Arial,sans-serif;
+ min-height:100vh;
+ transition:background .2s,color .2s;
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+header{
+ height:65px;
+ display:flex;
+ align-items:center;
+ gap:14px;
+ padding:0 18px;
+ border-bottom:1px solid var(--border);
+ background:var(--bg);
+ position:sticky;
+ top:0;
+ z-index:30;
+}
+.menu-btn{
+ width:42px;height:42px;
+ border:1px solid var(--border);
+ background:var(--card);
+ color:var(--text);
+ border-radius:13px;
+ font-size:21px;
+}
+.logo{
+ font-size:22px;
+ font-weight:bold;
+ letter-spacing:.3px;
+}
+.logo span{color:var(--accent)}
+.header-right{margin-left:auto}
+.header-right button{
+ background:var(--card);
+ border:1px solid var(--border);
+ color:var(--text);
+ border-radius:12px;
+ padding:10px 13px;
+}
+.sidebar{
+ position:fixed;
+ left:-270px;
+ top:65px;
+ bottom:0;
+ width:255px;
+ padding:18px 12px;
+ background:var(--card);
+ border-right:1px solid var(--border);
+ z-index:25;
+ transition:left .23s ease;
+ overflow-y:auto;
+}
 .sidebar.open{left:0}
-.overlay{position:fixed;inset:65px 0 0;background:#0008;z-index:15}
+.overlay{
+ position:fixed;
+ inset:65px 0 0;
+ background:rgba(0,0,0,.55);
+ z-index:20;
+ display:none;
+}
 .overlay.open{display:block}
-.content{padding:17px 14px 35px}
-.hero{margin:18px 0 25px}
-h1{font-size:24px}.head-right{font-size:9px}
+.menu-label{
+ color:var(--muted);
+ font-size:12px;
+ padding:12px 12px 8px;
+}
+.menu-item{
+ width:100%;
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:13px 12px;
+ border:0;
+ background:transparent;
+ color:var(--text);
+ border-radius:12px;
+ text-align:left;
+ margin-bottom:4px;
+}
+.menu-item:hover,.menu-item.active{
+ background:var(--card2);
+}
+.menu-icon{
+ width:25px;
+ text-align:center;
+ font-size:18px;
+}
+main{
+ max-width:760px;
+ padding:24px 16px 60px;
+ margin:auto;
+}
+.page{display:none}
+.page.active{display:block}
+.welcome{
+ text-align:center;
+ padding:25px 8px 18px;
+}
+.welcome h1{
+ font-size:27px;
+ margin:0 0 10px;
+}
+.welcome p{
+ color:var(--muted);
+ margin:0;
+ font-size:14px;
+ line-height:1.6;
+}
+.card{
+ background:var(--card);
+ border:1px solid var(--border);
+ border-radius:18px;
+ padding:18px;
+ margin-bottom:16px;
+}
+.label{
+ font-weight:600;
+ font-size:14px;
+ margin-bottom:10px;
+ display:block;
+}
+.url-box{
+ width:100%;
+ min-height:112px;
+ resize:vertical;
+ background:var(--bg);
+ border:1px solid var(--border);
+ border-radius:14px;
+ padding:14px;
+ color:var(--text);
+ outline:none;
+ line-height:1.5;
+}
+.url-box:focus{
+ border-color:var(--accent);
+ box-shadow:0 0 0 3px rgba(108,99,255,.12);
+}
+.button-row{
+ display:flex;
+ gap:10px;
+ margin-top:13px;
+}
+.btn{
+ border:0;
+ border-radius:13px;
+ padding:13px 16px;
+ font-weight:bold;
+ transition:transform .12s,opacity .12s;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{
+ background:linear-gradient(135deg,var(--accent),var(--accent2));
+ color:white;
+}
+.btn-secondary{
+ background:var(--card2);
+ color:var(--text);
+ border:1px solid var(--border);
+}
+.btn-danger{
+ background:var(--danger);
+ color:white;
+}
+.btn-block{width:100%}
+.button-row .btn{flex:1}
+.status{
+ display:none;
+ margin-top:13px;
+ padding:12px;
+ border-radius:12px;
+ font-size:13px;
+ line-height:1.5;
+ background:var(--card2);
+ color:var(--muted);
+}
+.status.show{display:block}
+.status.error{color:#ff8e8e}
+.status.success{color:#75e6ae}
+.video-preview{
+ display:none;
+ margin-top:16px;
+ overflow:hidden;
+ border:1px solid var(--border);
+ border-radius:15px;
+ background:var(--card2);
+}
+.video-preview.show{display:block}
+.thumbnail{
+ width:100%;
+ aspect-ratio:16/9;
+ object-fit:cover;
+ background:#05070c;
+ display:block;
+}
+.video-details{padding:14px}
+.video-title{
+ font-weight:bold;
+ font-size:16px;
+ line-height:1.5;
+ margin-bottom:8px;
+}
+.video-meta{
+ color:var(--muted);
+ font-size:13px;
+ line-height:1.8;
+}
+.options-grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:12px;
+ margin-top:16px;
+}
+.option-box{
+ background:var(--card);
+ border:1px solid var(--border);
+ border-radius:16px;
+ padding:14px;
+ min-width:0;
+}
+.option-box label{
+ display:block;
+ font-size:13px;
+ color:var(--muted);
+ margin-bottom:9px;
+}
+.select-wrap{position:relative}
+.select-wrap:after{
+ content:"⌄";
+ position:absolute;
+ right:14px;
+ top:50%;
+ transform:translateY(-50%);
+ pointer-events:none;
+ color:var(--muted);
+ font-size:17px;
+}
+select{
+ width:100%;
+ height:48px;
+ padding:0 38px 0 12px;
+ border:1px solid var(--border);
+ border-radius:12px;
+ outline:none;
+ appearance:none;
+ -webkit-appearance:none;
+ background:var(--card2);
+ color:var(--text);
+ font-size:14px;
+}
+select:focus{
+ border-color:var(--accent);
+ box-shadow:0 0 0 3px rgba(108,99,255,.12);
+}
+.download-btn{
+ width:100%;
+ margin-top:16px;
+ padding:16px;
+ font-size:16px;
+ border-radius:15px;
+}
+.section-title{
+ font-size:21px;
+ margin:5px 0 18px;
+}
+.history-item{
+ display:flex;
+ gap:12px;
+ align-items:center;
+ border:1px solid var(--border);
+ background:var(--card);
+ border-radius:14px;
+ padding:12px;
+ margin-bottom:10px;
+}
+.history-thumb{
+ width:90px;
+ height:60px;
+ border-radius:9px;
+ object-fit:cover;
+ background:var(--card2);
+ flex-shrink:0;
+}
+.history-info{min-width:0;flex:1}
+.history-title{
+ font-size:14px;
+ font-weight:bold;
+ line-height:1.4;
+ overflow-wrap:anywhere;
+}
+.history-date{
+ color:var(--muted);
+ font-size:12px;
+ margin-top:6px;
+}
+.empty{
+ color:var(--muted);
+ text-align:center;
+ padding:35px 10px;
+ background:var(--card);
+ border:1px dashed var(--border);
+ border-radius:16px;
+}
+.settings-row{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:14px;
+ padding:15px 0;
+ border-bottom:1px solid var(--border);
+}
+.settings-row:last-child{border-bottom:0}
+.settings-row small{
+ display:block;
+ color:var(--muted);
+ margin-top:5px;
+ line-height:1.5;
+}
+.toggle{
+ width:48px;
+ height:27px;
+ appearance:none;
+ background:#39445b;
+ border-radius:30px;
+ position:relative;
+ cursor:pointer;
+ flex-shrink:0;
+}
+.toggle:checked{background:var(--accent)}
+.toggle:before{
+ content:"";
+ position:absolute;
+ width:21px;
+ height:21px;
+ left:3px;
+ top:3px;
+ border-radius:50%;
+ background:white;
+ transition:.2s;
+}
+.toggle:checked:before{left:24px}
+.color-input{
+ width:45px;
+ height:38px;
+ border:1px solid var(--border);
+ border-radius:9px;
+ background:transparent;
+ padding:2px;
+}
+.info-text{
+ font-size:14px;
+ color:var(--muted);
+ line-height:1.8;
+}
+footer{
+ text-align:center;
+ color:var(--muted);
+ font-size:12px;
+ padding:24px 8px;
+}
+@media(max-width:420px){
+ main{padding:16px 12px 50px}
+ .welcome h1{font-size:23px}
+ .card{padding:14px}
+ .options-grid{gap:9px}
+ .option-box{padding:11px}
+ select{font-size:13px;height:46px}
+ .button-row{gap:8px}
+ .btn{padding:12px 10px;font-size:14px}
 }
 </style>
 </head>
+
 <body>
+
 <header>
- <div class="head-left">
-  <button class="menu-btn" onclick="toggleMenu()">☰</button>
-  <div class="logo">F<span>Down</span></div>
+ <button class="menu-btn" onclick="toggleMenu()" aria-label="Menu">☰</button>
+ <div class="logo">F<span>Down</span></div>
+ <div class="header-right">
+  <button onclick="setMode(document.body.classList.contains('light')?'dark':'light')" title="Theme">◐</button>
  </div>
- <div class="head-right">PERSONAL DOWNLOADER</div>
 </header>
 
-<div class="layout">
-<aside class="sidebar" id="sidebar">
- <div class="nav-label">MAIN MENU</div>
- <button class="nav-item active" data-page="home" onclick="navigate('home')"><span class="nav-icon">⌂</span> Home</button>
- <button class="nav-item" data-page="downloads" onclick="navigate('downloads')"><span class="nav-icon">⬇</span> Downloads</button>
- <button class="nav-item" data-page="history" onclick="navigate('history')"><span class="nav-icon">◷</span> History</button>
- <div class="nav-label">PERSONAL</div>
- <button class="nav-item" data-page="settings" onclick="navigate('settings')"><span class="nav-icon">⚙</span> Settings</button>
- <button class="nav-item" data-page="developer" onclick="navigate('developer')"><span class="nav-icon">⌘</span> Developer</button>
- <button class="nav-item" data-page="about" onclick="navigate('about')"><span class="nav-icon">ⓘ</span> About FDown</button>
- <button class="nav-item" data-page="privacy" onclick="navigate('privacy')"><span class="nav-icon">♢</span> Privacy</button>
- <div class="side-bottom">FDown v2.1<br>Personal downloader</div>
-</aside>
-<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
 
-<main class="content">
-<section class="page active" id="page-home">
- <div class="hero">
-  <div class="app-icon">⬇</div>
-  <h1>ভিডিও ডাউনলোড</h1>
-  <div class="subtitle">ভিডিও লিংক পেস্ট করে তথ্য দেখুন এবং ডাউনলোড করুন</div>
+<nav class="sidebar" id="sidebar">
+ <div class="menu-label">MENU</div>
+ <button class="menu-item active" onclick="navigate('home',this)">
+  <span class="menu-icon">⌂</span> Home
+ </button>
+ <button class="menu-item" onclick="navigate('history',this)">
+  <span class="menu-icon">◷</span> Downloads / History
+ </button>
+
+ <div class="menu-label">PREFERENCES</div>
+ <button class="menu-item" onclick="navigate('settings',this)">
+  <span class="menu-icon">⚙</span> Settings
+ </button>
+
+ <div class="menu-label">INFORMATION</div>
+ <button class="menu-item" onclick="navigate('developer',this)">
+  <span class="menu-icon">⌘</span> Developer
+ </button>
+ <button class="menu-item" onclick="navigate('about',this)">
+  <span class="menu-icon">ⓘ</span> About
+ </button>
+ <button class="menu-item" onclick="navigate('privacy',this)">
+  <span class="menu-icon">♧</span> Privacy
+ </button>
+</nav>
+
+<main>
+
+<!-- HOME -->
+<section class="page active" id="home">
+ <div class="welcome">
+  <h1>Facebook Video Downloader</h1>
+  <p>ভিডিও লিংক দিন, ভিডিও ডাউনলোড করুন সহজেই।</p>
  </div>
- <div class="card">
-  <div class="label">ভিডিও লিংক</div>
-  <textarea id="url" placeholder="এখানে Facebook ভিডিও লিংক পেস্ট করো..."></textarea>
-  <button class="btn btn-secondary fetch-info" id="infoBtn" onclick="getVideoInfo()">🔍 ভিডিও তথ্য দেখুন</button>
 
-  <div class="preview-box" id="previewBox">
-   <img class="preview-thumb" id="previewThumb" alt="Video Thumbnail">
-   <div class="preview-meta">
-    <div class="preview-title" id="previewTitle"></div>
-    <div class="preview-sub" id="previewDetails"></div>
+ <div class="card">
+  <label class="label" for="videoUrl">ভিডিও লিংক</label>
+  <textarea id="videoUrl" class="url-box" placeholder="এখানে Facebook ভিডিও লিংক পেস্ট করুন..."></textarea>
+
+  <div class="button-row">
+   <button class="btn btn-secondary" onclick="getVideoInfo()">ℹ Video Info</button>
+   <button class="btn btn-secondary" onclick="clearAll()">✕ Clear</button>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <div id="preview" class="video-preview">
+   <img id="thumbnail" class="thumbnail" alt="Video Thumbnail">
+   <div class="video-details">
+    <div class="video-title" id="videoTitle">Video Title</div>
+    <div class="video-meta" id="videoMeta"></div>
    </div>
   </div>
 
   <div class="options-grid">
-   <div>
-    <div class="option-label">ভিডিও Quality</div>
-    <select class="option-select" id="qualitySelect"><option value="best">Best Available</option></select>
+   <div class="option-box">
+    <label for="quality">Video Quality</label>
+    <div class="select-wrap">
+     <select id="quality">
+      <option value="best">Best Available</option>
+      <option value="1080">1080p</option>
+      <option value="720">720p</option>
+      <option value="480">480p</option>
+      <option value="360">360p</option>
+     </select>
+    </div>
    </div>
-   <div>
-    <div class="option-label">FPS (সর্বোচ্চ)</div>
-    <select class="option-select" id="fpsSelect"><option value="original">Original FPS</option></select>
+
+   <div class="option-box">
+    <label for="fps">Frame Rate (FPS)</label>
+    <div class="select-wrap">
+     <select id="fps">
+      <option value="original">Original FPS</option>
+      <option value="60">60 FPS</option>
+      <option value="30">30 FPS</option>
+      <option value="24">24 FPS</option>
+     </select>
+    </div>
    </div>
   </div>
 
-  <div class="buttons">
-   <button class="btn btn-secondary" onclick="clearLink()">Clear</button>
-   <button class="btn btn-primary" id="downloadBtn" onclick="downloadVideo()">⬇ Download Video</button>
-  </div>
-  <div class="status" id="status"></div>
+  <button class="btn btn-primary download-btn" id="downloadBtn" onclick="downloadVideo()">
+   ⬇ Download Video
+  </button>
  </div>
 
- <div class="card info-box"><b>ℹ️ তথ্য</b><br>শুধুমাত্র নিজের অথবা ডাউনলোড করার অনুমতি থাকা ভিডিও ব্যবহার করো। সব ভিডিও বা Quality সব সময় উপলব্ধ নাও হতে পারে।</div>
+ <footer>FDown • Simple Video Downloader</footer>
 </section>
 
-<section class="page" id="page-downloads">
- <h2 class="section-title">Downloads</h2><div class="section-sub">এই ডিভাইসে ডাউনলোডের রেকর্ড</div>
- <div class="card" id="downloadsList"></div>
+<!-- HISTORY -->
+<section class="page" id="history">
+ <h2 class="section-title">Download History</h2>
+ <div class="button-row" style="margin-bottom:15px">
+  <button class="btn btn-secondary btn-block" onclick="renderHistory()">↻ Refresh</button>
+  <button class="btn btn-danger btn-block" onclick="clearHistory()">🗑 Clear History</button>
+ </div>
+ <div id="historyList"></div>
 </section>
 
-<section class="page" id="page-history">
- <h2 class="section-title">Download History</h2><div class="section-sub">আগের ডাউনলোডগুলো</div>
- <div class="card" id="historyList"></div>
- <button class="btn btn-secondary" onclick="clearHistory()">🗑 Clear History</button>
-</section>
-
-<section class="page" id="page-settings">
- <h2 class="section-title">Preferences</h2><div class="section-sub">অ্যাপ নিজের পছন্দমতো সাজাও</div>
+<!-- SETTINGS -->
+<section class="page" id="settings">
+ <h2 class="section-title">Settings</h2>
  <div class="card">
-  <div class="setting-row">
-   <div><div class="setting-name">Appearance</div><div class="setting-desc">Dark অথবা Light Mode</div></div>
-   <select id="modeSelect" onchange="setMode(this.value)" style="width:auto"><option value="dark">Dark</option><option value="light">Light</option></select>
+  <div class="settings-row">
+   <div>
+    <strong>Dark Mode</strong>
+    <small>ডার্ক থিম চালু বা বন্ধ করুন</small>
+   </div>
+   <input class="toggle" type="checkbox" id="themeToggle" onchange="setMode(this.checked?'dark':'light')">
   </div>
-  <div class="setting-row"><div><div class="setting-name">Theme Color</div><div class="setting-desc">রঙ পরিবর্তন</div></div></div>
-  <div class="color-list">
-   <button class="color-dot" style="background:#3985ff" onclick="setColor('#3985ff')" aria-label="Blue"></button>
-   <button class="color-dot" style="background:#16b981" onclick="setColor('#16b981')" aria-label="Green"></button>
-   <button class="color-dot" style="background:#a855f7" onclick="setColor('#a855f7')" aria-label="Purple"></button>
-   <button class="color-dot" style="background:#f97316" onclick="setColor('#f97316')" aria-label="Orange"></button>
-   <button class="color-dot" style="background:#ec4899" onclick="setColor('#ec4899')" aria-label="Pink"></button>
-   <button class="color-dot" style="background:#06b6d4" onclick="setColor('#06b6d4')" aria-label="Cyan"></button>
+
+  <div class="settings-row">
+   <div>
+    <strong>Accent Color</strong>
+    <small>অ্যাপের প্রধান রং পরিবর্তন করুন</small>
+   </div>
+   <input type="color" id="accentColor" class="color-input" value="#6c63ff" onchange="setColor(this.value)">
   </div>
  </div>
 </section>
 
-<section class="page" id="page-developer">
- <h2 class="section-title">Developer</h2><div class="section-sub">FDown তৈরি ও পরিচালনা</div>
- <div class="card info-box"><h3>👨‍💻 FDown Developer</h3><p>Developer: <b>Sargo</b></p><p>Project: FDown Personal Downloader</p><p>GitHub:</p><a href="https://github.com/sargodev8119-hash/Fdawn" target="_blank">github.com/sargodev8119-hash/Fdawn</a></div>
+<!-- DEVELOPER -->
+<section class="page" id="developer">
+ <h2 class="section-title">Developer</h2>
+ <div class="card">
+  <p class="info-text">
+   FDown is a simple video downloader interface.<br><br>
+   Frontend: HTML, CSS & JavaScript<br>
+   Backend: Python / Flask<br>
+   Video processing: yt-dlp
+  </p>
+ </div>
 </section>
 
-<section class="page" id="page-about">
- <h2 class="section-title">About FDown</h2><div class="section-sub">অ্যাপ সম্পর্কে</div>
- <div class="card info-box"><h3>FDown ⬇</h3><p>FDown একটি ব্যক্তিগত ভিডিও ডাউনলোডার প্রজেক্ট।</p><p>Version: 2.1</p><p>Platform: Web</p></div>
+<!-- ABOUT -->
+<section class="page" id="about">
+ <h2 class="section-title">About FDown</h2>
+ <div class="card">
+  <p class="info-text">
+   FDown একটি সাধারণ ভিডিও ডাউনলোডার ইন্টারফেস।
+   সহজে ভিডিও লিংক ব্যবহার করে ভিডিও ডাউনলোড করার জন্য
+   এই ওয়েব অ্যাপ তৈরি করা হয়েছে।
+  </p>
+ </div>
 </section>
 
-<section class="page" id="page-privacy">
- <h2 class="section-title">Privacy</h2><div class="section-sub">গোপনীয়তা ও ব্যবহার</div>
- <div class="card info-box"><h3>🔒 Privacy Notice</h3><p>ডাউনলোড History তোমার ব্রাউজারের Local Storage-এ রাখা হয়।</p><p>ডাউনলোড করার সময় ভিডিও লিংক আমাদের ডাউনলোড সার্ভারে পাঠানো হয়।</p><p>নিজের বা অনুমতি থাকা ভিডিও ডাউনলোড করো।</p></div>
+<!-- PRIVACY -->
+<section class="page" id="privacy">
+ <h2 class="section-title">Privacy</h2>
+ <div class="card">
+  <p class="info-text">
+   FDown আপনার Download History এবং Settings এই ডিভাইসের
+   Browser Local Storage-এ সংরক্ষণ করে।<br><br>
+   আপনার History মুছে ফেললে Local Storage থেকে তা সরানো হবে।
+  </p>
+ </div>
 </section>
 
-<footer>FDown • Personal video downloader</footer>
 </main>
-</div>
-</body>
-</html>
 
+<script>
 const SERVER="https://fdawn-service.onrender.com";
-const urlBox=document.getElementById("url");
-const statusBox=document.getElementById("status");
-const btn=document.getElementById("downloadBtn");
-const HISTORY_KEY="fdown_history_v21";
-let currentVideoInfo=null;
 
-function showStatus(msg,type=""){
- statusBox.textContent=msg;
- statusBox.className="status show "+type;
-}
+let videoData=null;
+
 function toggleMenu(){
  document.getElementById("sidebar").classList.toggle("open");
  document.getElementById("overlay").classList.toggle("open");
 }
-function navigate(page){
- document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
- document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
- document.getElementById("page-"+page)?.classList.add("active");
- document.querySelector('[data-page="'+page+'"]')?.classList.add("active");
+
+function closeMenu(){
  document.getElementById("sidebar").classList.remove("open");
  document.getElementById("overlay").classList.remove("open");
- if(page==="history"||page==="downloads")renderHistory();
 }
-function formatDuration(sec){
- if(sec==null)return "Unknown";
- sec=Math.floor(Number(sec));
- if(!Number.isFinite(sec))return "Unknown";
- const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
- return h?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${m}:${String(s).padStart(2,"0")}`;
-}
-function resetSelectors(){
- document.getElementById("qualitySelect").innerHTML='<option value="best">Best Available</option>';
- document.getElementById("fpsSelect").innerHTML='<option value="original">Original FPS</option>';
-}
-function clearLink(){
- urlBox.value="";
- statusBox.className="status";
- statusBox.textContent="";
- document.getElementById("previewBox").classList.remove("show");
- currentVideoInfo=null;
- resetSelectors();
-}
-async function getVideoInfo(){
- const url=urlBox.value.trim();
- const infoBtn=document.getElementById("infoBtn");
- if(!url){showStatus("আগে ভিডিও লিংক পেস্ট করো।","error");return;}
- try{
-  const parsed=new URL(url);
-  if(!["https:","http:"].includes(parsed.protocol))throw new Error("সঠিক ভিডিও লিংক দাও।");
- }catch(e){showStatus(e.message||"সঠিক ভিডিও লিংক দাও।","error");return;}
 
- infoBtn.disabled=true;
- infoBtn.textContent="⏳ তথ্য খোঁজা হচ্ছে...";
- showStatus("ভিডিওর তথ্য সংগ্রহ করা হচ্ছে...");
+function navigate(page,btn){
+ closeMenu();
+
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ const target=document.getElementById(page);
+ if(target) target.classList.add("active");
+
+ document.querySelectorAll(".menu-item").forEach(b=>b.classList.remove("active"));
+ if(btn) btn.classList.add("active");
+
+ if(page==="history") renderHistory();
+}
+
+function showStatus(message,type=""){
+ const box=document.getElementById("status");
+ box.textContent=message;
+ box.className="status show "+type;
+}
+
+function hideStatus(){
+ const box=document.getElementById("status");
+ box.textContent="";
+ box.className="status";
+}
+
+function clearAll(){
+ document.getElementById("videoUrl").value="";
+ document.getElementById("preview").classList.remove("show");
+ document.getElementById("thumbnail").src="";
+ document.getElementById("videoTitle").textContent="";
+ document.getElementById("videoMeta").textContent="";
+ videoData=null;
+ hideStatus();
+}
+
+async function getVideoInfo(){
+ const url=document.getElementById("videoUrl").value.trim();
+
+ if(!url){
+  showStatus("প্রথমে ভিডিও লিংক দিন।","error");
+  return;
+ }
+
+ showStatus("ভিডিও তথ্য খোঁজা হচ্ছে...");
+
  try{
-  const r=await fetch(SERVER+"/info",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
-  const data=await r.json();
-  if(!r.ok)throw new Error(data.error||"ভিডিও তথ্য পাওয়া যায়নি");
-  currentVideoInfo=data;
-  document.getElementById("previewTitle").textContent=data.title||"Video";
-  document.getElementById("previewDetails").textContent="Uploader: "+(data.uploader||"Unknown")+" • Duration: "+formatDuration(data.duration);
-  const img=document.getElementById("previewThumb");
-  if(data.thumbnail){img.src=data.thumbnail;img.style.display="block";}else{img.style.display="none";}
-  document.getElementById("previewBox").classList.add("show");
-  const qs=document.getElementById("qualitySelect");
+  const response=await fetch(SERVER+"/info",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({url:url})
+  });
+
+  const data=await response.json();
+
+  if(!response.ok){
+   throw new Error(data.error||"ভিডিও তথ্য পাওয়া যায়নি।");
+  }
+
+  videoData=data;
+
+  document.getElementById("videoTitle").textContent=data.title||"Untitled Video";
+  document.getElementById("videoMeta").textContent=
+   (data.uploader||"Unknown uploader")+
+   (data.duration ? " • "+formatDuration(data.duration):"");
+
+  const thumbnail=document.getElementById("thumbnail");
+  if(data.thumbnail){
+   thumbnail.src=data.thumbnail;
+   thumbnail.style.display="block";
+  }else{
+   thumbnail.style.display="none";
+  }
+
+  document.getElementById("preview").classList.add("show");
+
+  // Quality options
+  const qs=document.getElementById("quality");
   qs.innerHTML="";
   qs.add(new Option("Best Available","best"));
-  (data.qualities||[]).forEach(q=>qs.add(new Option(q+"p",String(q))));
-  const fs=document.getElementById("fpsSelect");
+
+  if(Array.isArray(data.qualities)&&data.qualities.length){
+   data.qualities.forEach(q=>{
+    qs.add(new Option(q+"p",String(q)));
+   });
+  }else{
+   ["1080","720","480","360"].forEach(q=>{
+    qs.add(new Option(q+"p",q));
+   });
+  }
+
+  // FPS options
+  const fs=document.getElementById("fps");
   fs.innerHTML="";
-  fs.add(new Option("Original FPS","original");
-  (data.fps_options||[]).forEach(f=>fs.add(new Option(f+" FPS (max)",String(f))));
-  showStatus("তথ্য পাওয়া গেছে। Quality ও FPS বেছে নাও।","success");
- }catch(e){
-  currentVideoInfo=null;
-  document.getElementById("previewBox").classList.remove("show");
-  showStatus(e.message||"তথ্য পাওয়া যায়নি।","error");
- }finally{
-  infoBtn.disabled=false;
-  infoBtn.textContent="🔍 ভিডিও তথ্য দেখুন";
+  fs.add(new Option("Original FPS","original"));
+
+  if(Array.isArray(data.fps_options)&&data.fps_options.length){
+   data.fps_options.forEach(f=>{
+    fs.add(new Option(f+" FPS",String(f)));
+   });
+  }else{
+   ["60","30","24"].forEach(f=>{
+    fs.add(new Option(f+" FPS",f));
+   });
+  }
+
+  showStatus("ভিডিও তথ্য পাওয়া গেছে।","success");
+
+ }catch(error){
+  videoData=null;
+  document.getElementById("preview").classList.remove("show");
+
+  showStatus(
+   "Video Info পাওয়া যায়নি। Backend-এ /info API থাকতে হবে। "+error.message,
+   "error"
+  );
  }
 }
-function getHistory(){
- try{return JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");}catch(e){return [];}
+
+function formatDuration(seconds){
+ seconds=Number(seconds)||0;
+ const h=Math.floor(seconds/3600);
+ const m=Math.floor((seconds%3600)/60);
+ const s=Math.floor(seconds%60);
+ return h>0
+  ? h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
+  : m+":"+String(s).padStart(2,"0");
 }
-function addHistory(url,title,quality,fps){
- const h=getHistory();
- h.unshift({url,title,quality,fps,date:new Date().toLocaleString()});
- localStorage.setItem(HISTORY_KEY,JSON.stringify(h.slice(0,100)));
+
+async function downloadVideo(){
+ const url=document.getElementById("videoUrl").value.trim();
+ const quality=document.getElementById("quality").value;
+ const fps=document.getElementById("fps").value;
+ const btn=document.getElementById("downloadBtn");
+
+ if(!url){
+  showStatus("প্রথমে ভিডিও লিংক দিন।","error");
+  return;
+ }
+
+ btn.disabled=true;
+ btn.textContent="⏳ Downloading...";
+ showStatus("ভিডিও ডাউনলোড হচ্ছে। অপেক্ষা করুন...");
+
+ try{
+  const response=await fetch(SERVER+"/download",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+    url:url,
+    quality:quality,
+    fps:fps
+   })
+  });
+
+  if(!response.ok){
+   let errorMessage="Download failed.";
+   try{
+    const errorData=await response.json();
+    errorMessage=errorData.error||errorMessage;
+   }catch(e){}
+   throw new Error(errorMessage);
+  }
+
+  const blob=await response.blob();
+  const blobUrl=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=blobUrl;
+  a.download="FDown_video.mp4";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
+
+  saveHistory({
+   title:videoData?.title||"Facebook Video",
+   thumbnail:videoData?.thumbnail||"",
+   url:url,
+   date:new Date().toISOString()
+  });
+
+  showStatus("Download সফল হয়েছে!","success");
+
+ }catch(error){
+  showStatus("Download ব্যর্থ: "+error.message,"error");
+ }finally{
+  btn.disabled=false;
+  btn.textContent="⬇ Download Video";
+ }
+}
+
+function saveHistory(item){
+ let history=getHistory();
+ history.unshift(item);
+ history=history.slice(0,50);
+ localStorage.setItem("fdown_history",JSON.stringify(history));
  renderHistory();
 }
-function escapeHTML(v){
- return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-function renderHistory(){
- const items=getHistory();
- const html=items.length?items.map(x=>`
-  <div class="history-item"><div class="history-icon">🎬</div>
-  <div class="history-info"><div class="history-title">${escapeHTML(x.title)}</div>
-  <div class="history-date">${escapeHTML(x.date)} • ${escapeHTML(x.quality)} • ${escapeHTML(x.fps)}</div></div></div>
- `).join(""):'<div class="empty">এখনো কোনো ডাউনলোড রেকর্ড নেই।</div>';
- document.getElementById("historyList").innerHTML=html;
- document.getElementById("downloadsList").innerHTML=html;
-}
-function clearHistory(){
- if(confirm("সব ডাউনলোড হিস্ট্রি মুছে ফেলবে?")){
-  localStorage.removeItem(HISTORY_KEY);
-  renderHistory();
+
+function getHistory(){
+ try{
+  return JSON.parse(localStorage.getItem("fdown_history")||"[]");
+ }catch(e){
+  return [];
  }
 }
-function setColor(c){
- document.documentElement.style.setProperty("--accent",c);
- localStorage.setItem("fdown_theme_v2",c);
- updateDots();
+
+function renderHistory(){
+ const container=document.getElementById("historyList");
+ const history=getHistory();
+
+ if(!history.length){
+  container.innerHTML='<div class="empty">এখনও কোনো ডাউনলোড নেই।</div>';
+  return;
+ }
+
+ container.innerHTML=history.map(item=>`
+  <div class="history-item">
+   <img class="history-thumb"
+    src="${escapeHTML(item.thumbnail||"")}"
+    onerror="this.style.display='none'"
+    alt="">
+   <div class="history-info">
+    <div class="history-title">${escapeHTML(item.title||"Video")}</div>
+    <div class="history-date">${escapeHTML(formatDate(item.date))}</div>
+   </div>
+  </div>
+ `).join("");
 }
-function updateDots(){
- const c=localStorage.getItem("fdown_theme_v2")||"#3985ff";
- document.querySelectorAll(".color-dot").forEach(b=>b.classList.toggle("selected",b.getAttribute("onclick").includes(c)));
+
+function escapeHTML(text){
+ return String(text)
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
 }
-function setMode(m){
- document.body.classList.toggle("light",m==="light");
- localStorage.setItem("fdown_mode_v2",m);
- document.getElementById("modeSelect").value=m;
-}
-function loadSettings(){
- const c=localStorage.getItem("fdown_theme_v2");
- const m=localStorage.getItem("fdown_mode_v2")||"dark";
- if(c)document.documentElement.style.setProperty("--accent",c);
- setMode(m);updateDots();
-}
-async function downloadVideo(){
- const url=urlBox.value.trim();
- const quality=document.getElementById("qualitySelect").value;
- const fps=document.getElementById("fpsSelect").value;
- if(!url){showStatus("আগে ভিডিও লিংক পেস্ট করো।","error");return;}
- try{const p=new URL(url);if(!["http:","https:"].includes(p.protocol))throw 0;}catch(e){showStatus("সঠিক ভিডিও লিংক দাও।","error");return;}
- btn.disabled=true;
- btn.textContent="⏳ ডাউনলোড হচ্ছে...";
- showStatus("সার্ভার ভিডিও প্রস্তুত করছে...");
+
+function formatDate(date){
  try{
-  const r=await fetch(SERVER+"/download",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,quality,fps})});
-  if(!r.ok){let msg="ডাউনলোড ব্যর্থ";try{const d=await r.json();msg=d.error||msg;}catch(e){}throw new Error(msg);}
-  const blob=await r.blob();
-  if(!blob.size)throw new Error("খালি ফাইল পাওয়া গেছে");
-  const obj=URL.createObjectURL(blob),a=document.createElement("a");
-  a.href=obj;a.download="FDown_video.mp4";document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(obj),60000);
-  addHistory(url,currentVideoInfo?.title||"Video download",quality,fps);
-  showStatus("ডাউনলোড শুরু হয়েছে! 🎉","success");
- }catch(e){showStatus(e.message||"ডাউনলোড হয়নি।","error");}
- finally{btn.disabled=false;btn.textContent="⬇ Download Video";}
+  return new Date(date).toLocaleString();
+ }catch(e){
+  return "";
+ }
 }
+
+function clearHistory(){
+ if(!confirm("সব Download History মুছে ফেলবেন?")) return;
+ localStorage.removeItem("fdown_history");
+ renderHistory();
+}
+
+function setColor(color){
+ document.documentElement.style.setProperty("--accent",color);
+ localStorage.setItem("fdown_accent",color);
+}
+
+function setMode(mode){
+ document.body.classList.toggle("light",mode==="light");
+ localStorage.setItem("fdown_theme",mode);
+
+ const toggle=document.getElementById("themeToggle");
+ if(toggle) toggle.checked=(mode==="dark");
+}
+
+function loadSettings(){
+ const theme=localStorage.getItem("fdown_theme")||"dark";
+ const accent=localStorage.getItem("fdown_accent")||"#6c63ff";
+
+ setMode(theme);
+ setColor(accent);
+
+ document.getElementById("accentColor").value=accent;
+}
+
 loadSettings();
 renderHistory();
 </script>
 
+</body>
+</html>
