@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#090d18">
 <title>FDown</title>
 <style>
@@ -14,7 +14,7 @@ header{padding:23px 20px;display:flex;align-items:center;justify-content:space-b
 .tag{color:#8e9ab2;font-size:12px}
 main{max-width:480px;margin:auto;padding:30px 20px}
 .hero{text-align:center;margin:30px 0}
-.icon{width:75px;height:75px;margin:auto;border-radius:23px;background:linear-gradient(145deg,#1d65e9,#1441a4);display:grid;place-items:center;font-size:32px}
+.icon{width:75px;height:75px;margin:auto;border-radius:23px;background:linear-gradient(145deg,#1d65e9,#1441a4);display:grid;place-items:center;font-size:32px;box-shadow:0 10px 35px #1747aa55}
 h1{font-size:27px;margin:22px 0 10px}
 .subtitle{color:#8c98ad;line-height:1.6;font-size:14px}
 .card{background:#111827;border:1px solid #232e43;border-radius:20px;padding:18px;margin-top:28px}
@@ -25,6 +25,7 @@ textarea:focus{border-color:#4382f5}
 button{border:0;border-radius:12px;padding:14px;color:white;font-weight:700;cursor:pointer}
 .clear{background:#202a3a}
 .download{flex:1;background:linear-gradient(90deg,#2870f5,#1751c4)}
+.download:disabled{opacity:.6}
 .status{display:none;margin-top:15px;padding:12px;border-radius:12px;font-size:13px;line-height:1.5;background:#182438;color:#b9cae8;overflow-wrap:anywhere}
 .status.show{display:block}
 .info{margin-top:22px;color:#8997ad;font-size:12px;line-height:1.7;text-align:center}
@@ -36,71 +37,116 @@ footer{text-align:center;padding:20px;color:#647087;font-size:11px}
  <div class="logo">F<span>Down</span></div>
  <div class="tag">PERSONAL • NO ADS</div>
 </header>
+
 <main>
  <div class="hero">
   <div class="icon">⬇</div>
   <h1>ভিডিও ডাউনলোড</h1>
-  <div class="subtitle">অনুমোদিত সরাসরি ভিডিও ফাইলের লিংক ব্যবহার করো।</div>
+  <div class="subtitle">অনুমোদিত ভিডিওর সরাসরি লিংক পেস্ট করো</div>
  </div>
+
  <div class="card">
   <div class="label">ভিডিও লিংক</div>
-  <textarea id="url" placeholder="সরাসরি ভিডিও ফাইলের URL পেস্ট করো..."></textarea>
+  <textarea id="url" placeholder="এখানে ভিডিও লিংক পেস্ট করো..."></textarea>
   <div class="buttons">
    <button class="clear" onclick="clearLink()">Clear</button>
-   <button class="download" onclick="downloadVideo()">⬇ Download Video</button>
+   <button class="download" id="downloadBtn" onclick="downloadVideo()">⬇ Download Video</button>
   </div>
   <div class="status" id="status"></div>
  </div>
+
  <div class="info">
-  শুধুমাত্র নিজের বা ডাউনলোডের অনুমতি থাকা ভিডিও ব্যবহার করো।
+  শুধুমাত্র নিজের বা ডাউনলোড করার অনুমতি থাকা ভিডিও ব্যবহার করো।
   সব সাইটের লিংক কাজ নাও করতে পারে।
  </div>
 </main>
+
 <footer>FDown • Personal video downloader</footer>
+
 <script>
-const urlBox=document.getElementById("url");
-const statusBox=document.getElementById("status");
+const SERVER = "https://fdawn-service.onrender.com";
+const urlBox = document.getElementById("url");
+const statusBox = document.getElementById("status");
+const btn = document.getElementById("downloadBtn");
 
 function clearLink(){
- urlBox.value="";
- statusBox.className="status";
- statusBox.textContent="";
+ urlBox.value = "";
+ statusBox.textContent = "";
+ statusBox.className = "status";
 }
 
 function showStatus(text){
- statusBox.textContent=text;
- statusBox.className="status show";
+ statusBox.textContent = text;
+ statusBox.className = "status show";
 }
 
-function downloadVideo(){
- const url=urlBox.value.trim();
+async function downloadVideo(){
+ const url = urlBox.value.trim();
+
  if(!url){
   showStatus("আগে ভিডিও লিংক পেস্ট করো।");
   return;
  }
 
- let parsed;
- try{parsed=new URL(url);}catch(e){
-  showStatus("সঠিক লিংক দাও।");
+ try{
+  const parsed = new URL(url);
+  if(!["http:","https:"].includes(parsed.protocol)){
+   showStatus("সঠিক HTTP/HTTPS লিংক দাও।");
+   return;
+  }
+ }catch(e){
+  showStatus("সঠিক ভিডিও লিংক দাও।");
   return;
  }
 
- if(parsed.protocol!=="https:" && parsed.protocol!=="http:"){
-  showStatus("HTTP বা HTTPS ভিডিও লিংক ব্যবহার করো।");
-  return;
+ btn.disabled = true;
+ btn.textContent = "⏳ ডাউনলোড হচ্ছে...";
+ showStatus("সার্ভারের সঙ্গে যোগাযোগ করা হচ্ছে...");
+
+ try{
+  const response = await fetch(SERVER + "/download", {
+   method: "POST",
+   headers: {"Content-Type":"application/json"},
+   body: JSON.stringify({url})
+  });
+
+  if(!response.ok){
+   let message = "ডাউনলোড ব্যর্থ হয়েছে।";
+   try{
+    const data = await response.json();
+    if(data.error) message = data.error;
+   }catch(e){}
+   throw new Error(message);
+  }
+
+  const type = response.headers.get("Content-Type") || "";
+  if(type.includes("application/json")){
+   const data = await response.json();
+   if(data.download_url){
+    showStatus("সার্ভার শুধু লিংক ফেরত দিয়েছে; ফাইল ডাউনলোড তৈরি হয়নি।");
+    return;
+   }
+  }
+
+  const blob = await response.blob();
+  if(!blob.size) throw new Error("খালি ফাইল পাওয়া গেছে।");
+
+  const objectURL = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectURL;
+  a.download = "video.mp4";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(objectURL), 60000);
+
+  showStatus("ডাউনলোড শুরু হয়েছে! 🎉");
+ }catch(error){
+  showStatus(error.message || "ডাউনলোড হয়নি। আবার চেষ্টা করো।");
+ }finally{
+  btn.disabled = false;
+  btn.textContent = "⬇ Download Video";
  }
-
- // This works best with direct media file URLs.
- const a=document.createElement("a");
- a.href=parsed.href;
- a.download="video";
- a.target="_blank";
- a.rel="noopener";
- document.body.appendChild(a);
- a.click();
- a.remove();
-
- showStatus("লিংক খোলা হয়েছে। যদি ভিডিও প্লে হয়, ব্রাউজারের মেনু থেকে Download ব্যবহার করো।");
 }
 </script>
 </body>
