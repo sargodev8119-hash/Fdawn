@@ -1,6 +1,8 @@
 
 Flask
-requests
 Flask-Cors
 gunicorn
+requests
+yt-dlp
+
 
