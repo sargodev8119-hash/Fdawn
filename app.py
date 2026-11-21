@@ -31,34 +31,34 @@ def download():
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()
 
-    # Facebook domain check
-    allowed = (
+    allowed_hosts = (
         host == "facebook.com"
         or host.endswith(".facebook.com")
         or host == "fb.watch"
         or host.endswith(".fb.watch")
     )
 
-    if parsed.scheme not in ("http", "https") or not allowed:
-        return jsonify({"error": "শুধু Facebook ভিডিও লিংক দাও"}), 400
+    if parsed.scheme not in ("http", "https") or not allowed_hosts:
+        return jsonify({"error": "সঠিক Facebook ভিডিও লিংক দাও"}), 400
 
     temp_dir = tempfile.mkdtemp(prefix="fdown_")
     output_template = os.path.join(temp_dir, "video.%(ext)s")
 
-    try:
-        command = [
-            "python", "-m", "yt_dlp",
-            "--no-playlist",
-            "--no-warnings",
-            "--socket-timeout", "30",
-            "--retries", "1",
-            "--fragment-retries", "1",
-            "--max-filesize", "100M",
-            "-f", "best[ext=mp4]/best",
-            "-o", output_template,
-            url
-        ]
+    command = [
+        "python", "-m", "yt_dlp",
+        "--no-playlist",
+        "--no-warnings",
+        "--socket-timeout", "30",
+        "--retries", "2",
+        "--fragment-retries", "2",
+        "--max-filesize", "100M",
+        "-f", "bestvideo+bestaudio/best",
+        "--merge-output-format", "mp4",
+        "-o", output_template,
+        url
+    ]
 
+    try:
         result = subprocess.run(
             command,
             capture_output=True,
@@ -71,7 +71,7 @@ def download():
         if result.returncode != 0 or not files:
             shutil.rmtree(temp_dir, ignore_errors=True)
             return jsonify({
-                "error": "ভিডিও ডাউনলোড করা যায়নি। ভিডিওটি পাবলিক কিনা পরীক্ষা করো।"
+                "error": "ভিডিও ডাউনলোড হয়নি। ভিডিওটি পাবলিক কিনা পরীক্ষা করো।"
             }), 400
 
         video_path = files[0]
@@ -79,7 +79,8 @@ def download():
         response = send_file(
             video_path,
             as_attachment=True,
-            download_name="video.mp4"
+            download_name="FDown_video.mp4",
+            mimetype="video/mp4"
         )
 
         response.call_on_close(
@@ -90,7 +91,7 @@ def download():
 
     except subprocess.TimeoutExpired:
         shutil.rmtree(temp_dir, ignore_errors=True)
-        return jsonify({"error": "ডাউনলোড করতে সময় বেশি লাগছে"}), 408
+        return jsonify({"error": "ডাউনলোড করতে বেশি সময় লাগছে"}), 408
 
     except Exception:
         shutil.rmtree(temp_dir, ignore_errors=True)
